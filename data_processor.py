@@ -5,7 +5,7 @@ from nltk.corpus import stopwords
 STOPWORDS = stopwords.words('english')
 import re
 
-def process_file(filename, stop_after_rows=500):
+def process_file(filename, stop_after_rows=None):
     data = pd.read_csv(filename)
     data = data.values
     posts = data[:stop_after_rows,1]
@@ -43,6 +43,7 @@ def process_file(filename, stop_after_rows=500):
             j += 1
     
     counts = vectorizer.fit_transform(X) # counts in a 2D matrix
+    print(np.array(vectorizer.get_feature_names())[np.nonzero(counts[0])[1]])
     print(counts[0]) # just for playing around/testing
     # etc.     
 
@@ -51,7 +52,7 @@ def process_file(filename, stop_after_rows=500):
     
 
 def main():
-    gab_data = process_file('data/gab.csv')
+    gab_data = process_file('data/gab.csv', stop_after_rows=50)
     #reddit_data = process_file('data/reddit.csv')
 
 if __name__ == "__main__":
