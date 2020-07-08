@@ -46,12 +46,12 @@ def process_file(filename, stop_after_rows=None):
                 Y = np.append(Y, 0)
             j += 1
     
-    counts = vectorizer.fit_transform(X) # counts in a 2D matrix
-    print(np.array(vectorizer.get_feature_names())[np.nonzero(counts[0])[1]])
-    print(counts[0]) # just for playing around/testing
-    # etc.     
+    return X, Y
 
-    # data = re.sub(r'http\S+','',data)
+    # counts = vectorizer.fit_transform(X) # counts in a 2D matrix
+    # print(np.array(vectorizer.get_feature_names())[np.nonzero(counts[0])[1]])
+    # print(counts[0]) # just for playing around/testing
+    # # etc. 
     
     
 
