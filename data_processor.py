@@ -11,7 +11,8 @@ def process_file(filename, stop_after_rows=None):
     posts = data[:stop_after_rows,1]
     vectorizer = CountVectorizer()
     preprocessor = vectorizer.build_preprocessor()
-    X = np.empty(0)
+
+    list_of_all_posts = np.empty(0)
     Y = np.empty(0)
     print("Preprocessing progress (by rows of original data):")
     for i in range(posts.shape[0]):
@@ -21,14 +22,20 @@ def process_file(filename, stop_after_rows=None):
         j = 1
         for post in row_posts_list:
             post = post[(post.index('.') + 1):].strip() # remove the prepended index (e.g. "2.") and tab characters
-            # TODO: more preprocessing
-                # remove stopwords
-                # remove unique words (maybe this isn't the right place to do that? idk)
+            
+            # remove stopwords 
+            post_words = post.split()
+            post_words = list(filter(lambda word: word not in STOPWORDS, post_words))
+            post = " ".join(post_words)
+            
             # get rid of URLs
             post = re.sub( r'http\S+', '', post )
+            
+            # TODO: more preprocessing
+                # remove unique words (maybe this isn't the right place to do that? idk)
                 # emojis -- not sure
                 # address misspelling of significant words
-            X = np.append(X, post) # add it to our 1D numpy array of all posts
+            list_of_all_posts = np.append(list_of_all_posts, post) # add it to our 1D numpy array of all posts
             
             # Check if theres no response
             if type(data[i,2]) != float: # it's a string representation of a list
@@ -45,18 +52,19 @@ def process_file(filename, stop_after_rows=None):
             else: # it's 'n/a', which gets parsed as nan apparently. So none of these posts are marked as hate
                 Y = np.append(Y, 0)
             j += 1
-    
-    return X, Y
+    print("100%")
 
-    # counts = vectorizer.fit_transform(X) # counts in a 2D matrix
-    # print(np.array(vectorizer.get_feature_names())[np.nonzero(counts[0])[1]])
-    # print(counts[0]) # just for playing around/testing
-    # # etc. 
-    
+    counts = vectorizer.fit_transform(list_of_all_posts) # counts in a 2D matrix
+    counts_np = np.array(counts.toarray())
+
+    return counts_np, Y
+
+    # print(np.array(vectorizer.get_feature_names())[np.nonzero(counts[0])[1]]) # good for seeing the word counts of a single post
     
 
 def main():
-    gab_data = process_file('data/gab.csv', stop_after_rows=50)
+    gab_X, gab_Y = process_file('data/gab.csv', stop_after_rows=50)
+    # total_counts = gab_X.sum(0)
     #reddit_data = process_file('data/reddit.csv')
 
 if __name__ == "__main__":
