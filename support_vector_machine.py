@@ -3,19 +3,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from data_processor import *
 
-
-processor = Data_processor()
-data, labels = processor( file )
-
-
-def makeSVM( trainData, trainLabels ):
-    svm = LinearSVC( random_state=0, tol=1e-5 )
-    svm.fit( trainData, trainLabels )
+class SVM:
     
-    return svm
-    
-    
-def testSVM( testData ):
-    predLabels = svm.predict( testData )
-    print( "Accuracy:", score( testData, testLabels, sample_weight=None ) )
-    
+    def fit( self, trainData, trainLabels ):
+        self.svm = LinearSVC( random_state=0, tol=1e-5 )
+        self.svm.fit( trainData, trainLabels )
+        
+    def test( self, testData, testLabels ):
+        predLabels = self.svm.predict( testData )
+        print( "Accuracy:", self.svm.score( testData, testLabels, sample_weight=None ) )
