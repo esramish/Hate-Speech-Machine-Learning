@@ -30,15 +30,19 @@ def process_file(filename, stop_after_rows=None):
                 # address misspelling of significant words
             X = np.append(X, post) # add it to our 1D numpy array of all posts
             
-            #Check if theres no response
-            if type(data[i,2]) != float:
-                #Remove brackets from idx entries
+            # Check if theres no response
+            if type(data[i,2]) != float: # it's a string representation of a list
+                # Remove brackets from idx entries
                 temp = data[i,2].replace('[', '')
                 temp = temp.replace(']', '')
-            #If post matches hate_speech_idx, add 1 to Y
-            if str(j) in temp:
-                Y = np.append(Y, 1)
-            else: 
+                # Convert the string representation to an actual list of ints
+                temp_arr = list(map(lambda a: int(a), temp.split(',')))
+                #If post matches hate_speech_idx, add 1 to Y
+                if j in temp_arr:
+                    Y = np.append(Y, 1)
+                else: 
+                    Y = np.append(Y, 0)
+            else: # it's 'n/a', which gets parsed as nan apparently. So none of these posts are marked as hate
                 Y = np.append(Y, 0)
             j += 1
     
