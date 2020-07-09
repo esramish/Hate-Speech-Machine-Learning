@@ -11,6 +11,11 @@ class Processor:
         data = pd.read_csv(filename)
         data = data.values
         posts = data[:stop_after_rows,1]
+        r = data[:stop_after_rows,3]
+     
+        
+        responses = []
+        # print(responses[0])
         vectorizer = CountVectorizer()
         preprocessor = vectorizer.build_preprocessor()
 
@@ -47,15 +52,29 @@ class Processor:
                     # Convert the string representation to an actual list of ints
                     temp_arr = list(map(lambda a: int(a), temp.split(',')))
                     #If post matches hate_speech_idx, add 1 to Y
+
+
                     if j in temp_arr:
                         Y = np.append(Y, 1)
+                        #data[i,3]
+                        temp = data[i,3].replace('[', '')
+                        temp = temp.replace(']', '')
+                    # Convert the string representation to an actual list of ints
+                        #temp_resp = list(map(lambda a: str(a), temp.split(',')))
+                        temp_resp = temp.split(',')
+                        for k in range(len(temp_resp)):
+                            # print(len(Y)-1,Y.shape[0])
+                            responses.append([temp_resp[k],len(Y)-1])
                     else: 
                         Y = np.append(Y, 0)
                 else: # it's 'n/a', which gets parsed as nan apparently. So none of these posts are marked as hate
                     Y = np.append(Y, 0)
                 j += 1
         print("100%")
-
+        print(responses[0])
+        print(responses[1])
+        print(responses[2])
+        print(responses[3])
         counts = vectorizer.fit_transform(list_of_all_posts) # counts in a 2D matrix
         counts_np = np.array(counts.toarray())
 
