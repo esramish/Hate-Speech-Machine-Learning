@@ -7,9 +7,12 @@ import re
 
 class Processor:
 
-    def process_file(self, filename, stop_after_rows=None):
-        data = pd.read_csv(filename)
-        data = data.values
+    def process_files(self, *filenames, stop_after_rows=None):
+        '''Preprocess the post and label data from the given files. 
+        If stop_after_rows is given, this process stops after that many file rows (even if not all of the files are reached, as such).'''
+        data = pd.read_csv(filenames[0]).values
+        for filename in filenames[1:]: 
+            data = np.append(data, pd.read_csv(filename).values, axis=0)
         posts = data[:stop_after_rows,1]
         vectorizer = CountVectorizer()
         preprocessor = vectorizer.build_preprocessor()
@@ -66,9 +69,8 @@ class Processor:
 
 def main():
     p = Processor()
-    gab_X, gab_Y = p.process_file('data/gab.csv', stop_after_rows=50)
+    gab_X, gab_Y = p.process_files('data/gab.csv', stop_after_rows=50)
     # total_counts = gab_X.sum(0)
-    #reddit_data = process_file('data/reddit.csv')
 
 if __name__ == "__main__":
     main()
