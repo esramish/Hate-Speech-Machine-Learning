@@ -71,10 +71,11 @@ class Processor:
                     Y = np.append(Y, 0)
                 j += 1
         print("100%")
-        print(responses[0])
-        print(responses[1])
-        print(responses[2])
-        print(responses[3])
+        process_responses(responses)
+        # print(responses[0])
+        # print(responses[1])
+        # print(responses[2])
+        # print(responses[3])
         counts = vectorizer.fit_transform(list_of_all_posts) # counts in a 2D matrix
         counts_np = np.array(counts.toarray())
 
@@ -82,6 +83,12 @@ class Processor:
 
         # print(np.array(vectorizer.get_feature_names())[np.nonzero(counts[0])[1]]) # good for seeing the word counts of a single post
     
+def process_responses(responses):
+    for i in range(len(responses)):
+        responses[i][0]= responses[i][0].strip()
+        responses[i][0] = responses[i][0][1:-1]
+
+
 
 def main():
     p = Processor()
