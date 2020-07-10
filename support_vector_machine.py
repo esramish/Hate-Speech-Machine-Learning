@@ -1,8 +1,4 @@
 from sklearn.svm import LinearSVC
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from data_processor import *
-
 
 class SVM:
     
