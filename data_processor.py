@@ -85,11 +85,11 @@ class Processor:
         feature_names_np = np.array(feature_names) # convert to numpy
 
         # remove unique features/columns (i.e. words that appear only in one post throughout the corpus)
-        non_unique_indeces = np.nonzero(np.count_nonzero(counts_np,axis=0)>1)[0] # the column indeces of the features that appear in more than one document throughout the corpus
-        non_unique_counts_np = counts_np[:,non_unique_indeces] # select only the columns at those indeces
-        non_unique_feature_names_np = feature_names_np[non_unique_indeces] # select only the feature names at those indeces
+        non_unique_indices = np.nonzero(np.count_nonzero(counts_np,axis=0)>1)[0] # the column indices of the features that appear in more than one document throughout the corpus
+        non_unique_counts_np = counts_np[:,non_unique_indices] # select only the columns at those indices
+        non_unique_feature_names_np = feature_names_np[non_unique_indices] # select only the feature names at those indices
 
-        return non_unique_counts_np, non_unique_feature_names_np, Y
+        return non_unique_counts_np, non_unique_feature_names_np, responses, Y
 
         # print(np.array(vectorizer.get_feature_names())[np.nonzero(counts[0])[1]]) # good for seeing the word counts of a single post
     
