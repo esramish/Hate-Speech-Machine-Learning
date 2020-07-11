@@ -28,12 +28,12 @@ class Processor:
         for i in range(posts.shape[0]):
             if i % 100 == 0: print("%.0f%%" % (i*100/posts.shape[0]))
             row_posts_string = preprocessor(posts[i]) # preprocess the posts in this row (including making them lowercase)
-            row_posts_list = row_posts_string.split('\n')[:-1] # split up all the posts in a given row (and ignore the last one, since it's always empty)
+            row_posts_list = re.split(r'\n\d+\.', row_posts_string) # split up all the posts in a given row
             j = 1
             for post in row_posts_list:
-                post = post[(post.index('.') + 1):].strip() # remove the prepended index (e.g. "2.") and tab characters
+                post = post.strip("1.").strip() # remove any prepended "1." (that's the only case the regex split doesn't take care of), and then any prepended space/tab characters and any appended newline(s)
                 post = re.sub(r'\.|,|;|:|\?|!|\(|\)|\'|"|\u201C|\u201D', '', post) # remove certain punctuation
-                
+
                 # remove stopwords 
                 post = re.sub(r'\u2018|\u2019', "'", post) # replace smart (curly) apostrophes with ASCII apostrophes, since that's what nltk uses
                 post_words = post.split()

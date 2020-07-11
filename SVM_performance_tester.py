@@ -69,9 +69,9 @@ class SVM_performance_tester:
         print( "AccuracySVC2:", self.svc2.score( testData, testLabels, sample_weight=None ) )
         print( "AccuracySVC3:", self.svc3.score( testData, testLabels, sample_weight=None ) )
         print( "AccuracySVC4:", self.svc4.score( testData, testLabels, sample_weight=None ) )
-        print( "AccuracySVC6:", self.svc6.score( testData, testLabels, sample_weight=None ) )
-        print( "AccuracySVC7:", self.svc7.score( testData, testLabels, sample_weight=None ) )
-        print( "AccuracySVC8:", self.svc8.score( testData, testLabels, sample_weight=None ) )
+        print( "AccuracySVC5:", self.svc6.score( testData, testLabels, sample_weight=None ) )
+        print( "AccuracySVC6:", self.svc7.score( testData, testLabels, sample_weight=None ) )
+        print( "AccuracySVC7:", self.svc8.score( testData, testLabels, sample_weight=None ) )
 
         print( "AccuracySGD1:", self.sgd1.score( testData, testLabels, sample_weight=None ) )
         print( "AccuracySGD2:", self.sgd2.score( testData, testLabels, sample_weight=None ) )

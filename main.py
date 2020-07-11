@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 def main():
     processor = Processor()
-    data, feature_names, labels = processor.process_files('data/gab.csv', 'data/reddit.csv', stop_after_rows=500)
+    data, feature_names, labels = processor.process_files('data/gab.csv', 'data/reddit.csv')
     X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.1, random_state=6)
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=6)
     # model = SVM()
