@@ -11,12 +11,14 @@ def main():
     # model = SVM()
     # model.fit(X_train,y_train)
     # model.test(X_val, y_val)
-    performance_tester = SVM_performance_tester()
-    print('Fitting Models...')
+    performance_tester = SVM_performance_tester(includeSVCs=True)
+    print('\n\nFitting Models...')
     performance_tester.fit(X_train,y_train)
-    print('Done Fitting Models.')
-    print('Testing Models...')
+    print('Done Fitting Models.\n\n')
+    print('Testing Models on validation set...')
     performance_tester.test(X_val,y_val)
+    print('\n\nTesting Models on test set...')
+    performance_tester.test(X_test,y_test)
 
 
 if __name__ == "__main__":
