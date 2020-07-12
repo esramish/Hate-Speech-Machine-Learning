@@ -25,7 +25,8 @@ class Processor:
         responses = []
         # print(responses[0])
         vectorizer = CountVectorizer()
-        char_vectorizer = CountVectorizer(analyzer='char')
+        posts_char_vectorizer = CountVectorizer(analyzer='char')
+        resps_char_vectorizer = CountVectorizer(analyzer='char')
         preprocessor = vectorizer.build_preprocessor()
 
         list_of_all_posts = np.empty(0)
@@ -67,7 +68,7 @@ class Processor:
                     if j in temp_arr: # the jth post in this row is marked as hate speech
                         Y = np.append(Y, 1)
                         row_resps = ast.literal_eval(data[i,3])
-                        responses.append(random.choice(row_resps))
+                        responses.append(random.choice(row_resps).lower())
                     else: # the jth post in this row is marked as not hate speech
                         Y = np.append(Y, 0)
                 else: # it's 'n/a', which gets parsed as nan apparently. So none of these posts are marked as hate
@@ -85,11 +86,11 @@ class Processor:
         feature_names = vectorizer.get_feature_names() # the 1D python list of features (i.e. words) that correspond to the columns of counts_np
         feature_names_np = np.array(feature_names) # convert to numpy
 
-        char_vectorizer.fit(list_of_all_posts)
-        self.post_chars = char_vectorizer.get_feature_names() # a 1D python list of all the characters used in the processed posts
+        posts_char_vectorizer.fit(list_of_all_posts)
+        self.post_chars = posts_char_vectorizer.get_feature_names() # a 1D python list of all the characters used in the processed posts
 
-        char_vectorizer.fit(responses)
-        self.resp_chars = char_vectorizer.get_feature_names() # a 1D python list of all the characters used in the processed responses
+        resps_char_vectorizer.fit(responses)
+        self.resp_chars = resps_char_vectorizer.get_feature_names() # a 1D python list of all the characters used in the processed responses
 
         self.list_of_all_posts = list_of_all_posts
 
@@ -120,11 +121,11 @@ def process_responses(responses):
 
 def main():
     p = Processor()
-    gab_X, gab_feature_names, gab_Y, gab_resps = p.process_files('data/gab.csv', stop_after_rows=5)
-    print(p.get_posts_list())
-    print(gab_resps)
+    gab_X, gab_feature_names, gab_Y, gab_resps = p.process_files('data/gab.csv', stop_after_rows=500)
     print(p.get_post_chars())
+    print(gab_resps[:5])
     print(p.get_resp_chars())
+
     # total_counts = gab_X.sum(0)
 
 if __name__ == "__main__":
