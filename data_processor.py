@@ -4,10 +4,15 @@ from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 STOPWORDS = stopwords.words('english')
 import re
+import random
+import ast
+
+RANDOM_SEED = 13579
 
 class Processor:
 
     def process_files(self, *filenames, stop_after_rows=None):
+        random.seed(RANDOM_SEED)
         '''Preprocess the post and label data from the given files. 
         If stop_after_rows is given, this process stops after that many file rows (even if not all of the files are reached, as such).'''
         data = pd.read_csv(filenames[0]).values
@@ -20,6 +25,7 @@ class Processor:
         responses = []
         # print(responses[0])
         vectorizer = CountVectorizer()
+        char_vectorizer = CountVectorizer(analyzer='char')
         preprocessor = vectorizer.build_preprocessor()
 
         list_of_all_posts = np.empty(0)
@@ -60,13 +66,8 @@ class Processor:
 
                     if j in temp_arr: # the jth post in this row is marked as hate speech
                         Y = np.append(Y, 1)
-                        #data[i,3]
-                        temp = data[i,3].replace('[', '')
-                        temp = temp.replace(']', '')
-                        temp_resp = temp.split(',')
-                        for k in range(len(temp_resp)):
-                            # print(len(Y)-1,Y.shape[0])
-                            responses.append([temp_resp[k],len(Y)-1])
+                        row_resps = ast.literal_eval(data[i,3])
+                        responses.append(random.choice(row_resps))
                     else: # the jth post in this row is marked as not hate speech
                         Y = np.append(Y, 0)
                 else: # it's 'n/a', which gets parsed as nan apparently. So none of these posts are marked as hate
@@ -84,25 +85,46 @@ class Processor:
         feature_names = vectorizer.get_feature_names() # the 1D python list of features (i.e. words) that correspond to the columns of counts_np
         feature_names_np = np.array(feature_names) # convert to numpy
 
+        char_vectorizer.fit(list_of_all_posts)
+        self.post_chars = char_vectorizer.get_feature_names() # a 1D python list of all the characters used in the processed posts
+
+        char_vectorizer.fit(responses)
+        self.resp_chars = char_vectorizer.get_feature_names() # a 1D python list of all the characters used in the processed responses
+
+        self.list_of_all_posts = list_of_all_posts
+
         # remove unique features/columns (i.e. words that appear only in one post throughout the corpus)
         non_unique_indeces = np.nonzero(np.count_nonzero(counts_np,axis=0)>1)[0] # the column indeces of the features that appear in more than one document throughout the corpus
         non_unique_counts_np = counts_np[:,non_unique_indeces] # select only the columns at those indeces
         non_unique_feature_names_np = feature_names_np[non_unique_indeces] # select only the feature names at those indeces
 
-        return non_unique_counts_np, non_unique_feature_names_np, Y
+        return non_unique_counts_np, non_unique_feature_names_np, Y, responses
 
         # print(np.array(vectorizer.get_feature_names())[np.nonzero(counts[0])[1]]) # good for seeing the word counts of a single post
+
+    def get_post_chars(self): 
+        return self.post_chars
+    
+    def get_resp_chars(self):
+        return self.resp_chars
+    
+    def get_posts_list(self):
+        return self.list_of_all_posts
     
 def process_responses(responses):
     for i in range(len(responses)):
-        responses[i][0]= responses[i][0].strip()
-        responses[i][0] = responses[i][0][1:-1]
+        responses[i]= responses[i].strip()
+        # responses[i] = responses[i][1:-1] # no longer needed now that we're using ast.literal_eval
 
 
 
 def main():
     p = Processor()
-    gab_X, gab_feature_names, gab_Y = p.process_files('data/gab.csv', stop_after_rows=50)
+    gab_X, gab_feature_names, gab_Y, gab_resps = p.process_files('data/gab.csv', stop_after_rows=5)
+    print(p.get_posts_list())
+    print(gab_resps)
+    print(p.get_post_chars())
+    print(p.get_resp_chars())
     # total_counts = gab_X.sum(0)
 
 if __name__ == "__main__":
