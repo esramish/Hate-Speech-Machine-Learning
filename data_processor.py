@@ -12,6 +12,8 @@ RANDOM_SEED = 13579
 class Processor:
 
     def process_files(self, *filenames, stop_after_rows=None):
+        self.max_post_len = 0
+        self.max_resp_len = 0
         random.seed(RANDOM_SEED)
         '''Preprocess the post and label data from the given files. 
         If stop_after_rows is given, this process stops after that many file rows (even if not all of the files are reached, as such).'''
@@ -53,6 +55,7 @@ class Processor:
                 # TODO: potential further preprocessing ideas:
                     # emojis -- not sure, might want to leave them (although we've already gotten rid of some punctuation and therefore punctuation-emojis, currently)
                     # address misspelling of significant words
+                if len(post) > self.max_post_len: self.max_post_len = len(post)
                 list_of_all_posts = np.append(list_of_all_posts, post) # add it to our 1D numpy array of all posts
                 
                 # Check if theres no response
@@ -68,6 +71,8 @@ class Processor:
                     if j in temp_arr: # the jth post in this row is marked as hate speech
                         Y = np.append(Y, 1)
                         row_resps = ast.literal_eval(data[i,3])
+                        row_max_resp_len = max(map(lambda resp: len(resp), row_resps))
+                        if row_max_resp_len > self.max_resp_len: self.max_resp_len = row_max_resp_len
                         responses.append(random.choice(row_resps).lower())
                     else: # the jth post in this row is marked as not hate speech
                         Y = np.append(Y, 0)
@@ -112,6 +117,12 @@ class Processor:
     def get_posts_list(self):
         return self.list_of_all_posts
     
+    def get_max_post_len(self):
+        return self.max_post_len
+
+    def get_max_resp_len(self):
+        return self.max_resp_len
+    
 def process_responses(responses):
     for i in range(len(responses)):
         responses[i]= responses[i].strip()
@@ -122,10 +133,6 @@ def process_responses(responses):
 def main():
     p = Processor()
     gab_X, gab_feature_names, gab_Y, gab_resps = p.process_files('data/gab.csv', stop_after_rows=500)
-    print(p.get_post_chars())
-    print(gab_resps[:5])
-    print(p.get_resp_chars())
-
     # total_counts = gab_X.sum(0)
 
 if __name__ == "__main__":
