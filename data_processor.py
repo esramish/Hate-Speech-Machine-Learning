@@ -12,8 +12,8 @@ RANDOM_SEED = 13579
 class Processor:
 
     def process_files(self, *filenames, stop_after_rows=None):
-        self.max_post_len = 0
-        self.max_resp_len = 0
+        self.max_post_tokens = 0
+        self.max_resp_tokens = 0
         random.seed(RANDOM_SEED)
         '''Preprocess the post and label data from the given files. 
         If stop_after_rows is given, this process stops after that many file rows (even if not all of the files are reached, as such).'''
@@ -26,22 +26,23 @@ class Processor:
         
         responses = []
         # print(responses[0])
-        vectorizer = CountVectorizer()
-        posts_char_vectorizer = CountVectorizer(analyzer='char')
-        resps_char_vectorizer = CountVectorizer(analyzer='char')
-        preprocessor = vectorizer.build_preprocessor()
+        post_vectorizer = CountVectorizer()
+        resp_vectorizer = CountVectorizer(token_pattern=r'(?u)\b\w+\b') # want to keep 1-char words in the responses when tokenizing them
+        post_preprocessor = post_vectorizer.build_preprocessor()
+        self.post_tokenizer = post_vectorizer.build_tokenizer() # seq2seq also uses this
+        self.resp_tokenizer = resp_vectorizer.build_tokenizer() # seq2seq also uses this
 
         list_of_all_posts = np.empty(0)
         Y = np.empty(0)
         print("Preprocessing progress (by rows of original data):")
         for i in range(posts.shape[0]):
             if i % 100 == 0: print("%.0f%%" % (i*100/posts.shape[0]))
-            row_posts_string = preprocessor(posts[i]) # preprocess the posts in this row (including making them lowercase)
+            row_posts_string = post_preprocessor(posts[i]) # preprocess the posts in this row (including making them lowercase)
             row_posts_list = re.split(r'\n\d+\.', row_posts_string) # split up all the posts in a given row
             j = 1
             for post in row_posts_list:
                 post = post.strip("1.").strip() # remove any prepended "1." (that's the only case the regex split doesn't take care of), and then any prepended space/tab characters and any appended newline(s)
-                post = re.sub(r'\.|,|;|:|\?|!|\(|\)|\'|"|\u201C|\u201D', '', post) # remove certain punctuation
+                post = re.sub(r'\.|,|;|:|\?|!|\(|\)|"|\u201C|\u201D', '', post) # remove certain punctuation
 
                 # remove stopwords 
                 post = re.sub(r'\u2018|\u2019', "'", post) # replace smart (curly) apostrophes with ASCII apostrophes, since that's what nltk uses
@@ -55,7 +56,7 @@ class Processor:
                 # TODO: potential further preprocessing ideas:
                     # emojis -- not sure, might want to leave them (although we've already gotten rid of some punctuation and therefore punctuation-emojis, currently)
                     # address misspelling of significant words
-                if len(post) > self.max_post_len: self.max_post_len = len(post)
+                if len(self.post_tokenizer(post)) > self.max_post_tokens: self.max_post_tokens = len(self.post_tokenizer(post))
                 list_of_all_posts = np.append(list_of_all_posts, post) # add it to our 1D numpy array of all posts
                 
                 # Check if theres no response
@@ -71,8 +72,8 @@ class Processor:
                     if j in temp_arr: # the jth post in this row is marked as hate speech
                         Y = np.append(Y, 1)
                         row_resps = ast.literal_eval(data[i,3])
-                        row_max_resp_len = max(map(lambda resp: len(resp), row_resps))
-                        if row_max_resp_len > self.max_resp_len: self.max_resp_len = row_max_resp_len
+                        row_max_resp_tokens = max(map(lambda resp: len(self.resp_tokenizer(resp)), row_resps))
+                        if row_max_resp_tokens > self.max_resp_tokens: self.max_resp_tokens = row_max_resp_tokens
                         responses.append(random.choice(row_resps).lower())
                     else: # the jth post in this row is marked as not hate speech
                         Y = np.append(Y, 0)
@@ -85,17 +86,17 @@ class Processor:
         # print(responses[1])
         # print(responses[2])
         # print(responses[3])
-        counts = vectorizer.fit_transform(list_of_all_posts) # counts in a 2D matrix
+        counts = post_vectorizer.fit_transform(list_of_all_posts) # counts in a 2D matrix
         counts_np = np.array(counts.toarray()) # convert to normal numpy format
 
-        feature_names = vectorizer.get_feature_names() # the 1D python list of features (i.e. words) that correspond to the columns of counts_np
+        feature_names = post_vectorizer.get_feature_names() # the 1D python list of features (i.e. words) that correspond to the columns of counts_np
         feature_names_np = np.array(feature_names) # convert to numpy
 
-        posts_char_vectorizer.fit(list_of_all_posts)
-        self.post_chars = posts_char_vectorizer.get_feature_names() # a 1D python list of all the characters used in the processed posts
+        post_vectorizer.fit(list_of_all_posts)
+        self.post_tokens = post_vectorizer.get_feature_names() # a 1D python list of all the tokens (probably words) used in the processed posts
 
-        resps_char_vectorizer.fit(responses)
-        self.resp_chars = resps_char_vectorizer.get_feature_names() # a 1D python list of all the characters used in the processed responses
+        resp_vectorizer.fit(responses)
+        self.resp_tokens = resp_vectorizer.get_feature_names() # a 1D python list of all the tokens (probably words) used in the processed responses
 
         self.list_of_all_posts = list_of_all_posts
 
@@ -108,20 +109,26 @@ class Processor:
 
         # print(np.array(vectorizer.get_feature_names())[np.nonzero(counts[0])[1]]) # good for seeing the word counts of a single post
 
-    def get_post_chars(self): 
-        return self.post_chars
+    def get_post_tokens(self): 
+        return self.post_tokens
     
-    def get_resp_chars(self):
-        return self.resp_chars
+    def get_resp_tokens(self):
+        return self.resp_tokens
     
     def get_posts_list(self):
         return self.list_of_all_posts
     
-    def get_max_post_len(self):
-        return self.max_post_len
+    def get_max_post_tokens(self):
+        return self.max_post_tokens
 
-    def get_max_resp_len(self):
-        return self.max_resp_len
+    def get_max_resp_tokens(self):
+        return self.max_resp_tokens
+    
+    def get_post_tokenizer(self):
+        return self.post_tokenizer
+    
+    def get_resp_tokenizer(self):
+        return self.resp_tokenizer
     
 def process_responses(responses):
     for i in range(len(responses)):
