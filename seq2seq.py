@@ -6,6 +6,8 @@ import numpy as np
 START_TOKEN = 'STARTTOKEN'
 STOP_TOKEN = 'STOPTOKEN'
 
+'''An implementation of the sequence-to-sequence process (output text generation based on input text).
+A great deal of the code in this class comes directly from the following webpage: https://blog.keras.io/a-ten-minute-introduction-to-sequence-to-sequence-learning-in-keras.html'''
 class Seq2Seq:
     
     def fit(self, hateful_posts, responses, data_processor):
