@@ -12,7 +12,7 @@ RANDOM_SEED = 13579
 
 class Processor:
 
-    def process_files(self, *filenames, stop_after_rows=None, overwrite_output_files=True):
+    def process_files(self, *filenames, stop_after_rows=None, overwrite_output_files=True, output_files_prefix=''):
         self.max_post_tokens = 0
         self.max_resp_tokens = 0
         random.seed(RANDOM_SEED)
@@ -105,8 +105,8 @@ class Processor:
         non_unique_feature_names_np = feature_names_np[non_unique_indices] # select only the feature names at those indices
 
         if overwrite_output_files:
-            np.savez_compressed('data/preprocessed_data.npz', post_word_counts=non_unique_counts_np, post_feature_names=non_unique_feature_names_np, post_labels=Y, post_texts=list_of_all_posts, post_tokens=feature_names_np, response_texts=responses, resp_tokens=resp_tokens_np)
-            with open('data/preprocessor.pkl', 'wb') as obj_file:
+            np.savez_compressed('data/' + output_files_prefix + 'preprocessed_data.npz', post_word_counts=non_unique_counts_np, post_feature_names=non_unique_feature_names_np, post_labels=Y, post_texts=list_of_all_posts, post_tokens=feature_names_np, response_texts=responses, resp_tokens=resp_tokens_np)
+            with open('data/' + output_files_prefix + 'preprocessor.pkl', 'wb') as obj_file:
                 pickle.dump(self, obj_file, pickle.HIGHEST_PROTOCOL)
         
         return {'post_word_counts': non_unique_counts_np, 'post_feature_names': non_unique_feature_names_np, 'post_labels': Y, 'post_texts': list_of_all_posts, 'post_tokens': feature_names_np, 'response_texts': responses, 'resp_tokens': resp_tokens_np}
@@ -130,13 +130,13 @@ def process_responses(responses):
         responses[i]= responses[i].strip()
         # responses[i] = responses[i][1:-1] # no longer needed now that we're using ast.literal_eval
 
-def load_preprocessor():
-    with open('data/preprocessor.pkl', 'rb') as obj_file:
+def load_preprocessor(file_prefix=''):
+    with open('data/' + file_prefix + 'preprocessor.pkl', 'rb') as obj_file:
         preprocessor = pickle.load(obj_file)
     return preprocessor
 
-def load_preprocessed_data():
-    return np.load('data/preprocessed_data.npz')
+def load_preprocessed_data(file_prefix=''):
+    return np.load('data/' + file_prefix + 'preprocessed_data.npz')
 
 def main():
     p = Processor()

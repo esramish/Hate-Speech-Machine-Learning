@@ -1,7 +1,7 @@
 from keras.models import Model
 from keras.layers import Input, LSTM, Dense
 from keras.optimizers import RMSprop
-from data_processor import Processor
+from data_processor import *
 import numpy as np
 
 START_TOKEN = 'STARTTOKEN'
@@ -11,7 +11,7 @@ STOP_TOKEN = 'STOPTOKEN'
 A great deal of the code in this class comes directly from the following webpage: https://blog.keras.io/a-ten-minute-introduction-to-sequence-to-sequence-learning-in-keras.html'''
 class Seq2Seq:
     
-    def fit(self, hateful_posts, responses, post_tokens, resp_tokens, data_processor, latent_dim=100):
+    def fit(self, hateful_posts, responses, post_tokens, resp_tokens, data_processor, epochs=40, learning_rate=0.01, latent_dim=100):
         
         ### TRAINING ###
         
@@ -42,9 +42,9 @@ class Seq2Seq:
         decoder_outputs = decoder_dense(decoder_outputs)
 
         model = Model([encoder_inputs, decoder_inputs], decoder_outputs)
-        opt = RMSprop(learning_rate=0.01) # default learning rate is 0.001
+        opt = RMSprop(learning_rate=learning_rate) # default learning rate is 0.001
         model.compile(optimizer=opt, loss='categorical_crossentropy')
-        model.fit([hateful_posts_one_hot, decoder_input_data_one_hot], decoder_target_data_one_hot, batch_size=10, epochs=40, validation_split=0.2)
+        model.fit([hateful_posts_one_hot, decoder_input_data_one_hot], decoder_target_data_one_hot, batch_size=10, epochs=epochs, validation_split=0.1)
 
         ### PREP FOR TEXT GENERATION ###
 
@@ -99,18 +99,31 @@ def one_hot(strings, token_list, max_string_tokens, tokenizer):
     return one_hots
 
 def main():
+
+    # only used when we don't have already-processed data stored in files:
     p = Processor()
-    X, feature_names, Y, post_texts, post_tokens, actual_responses, resp_tokens = p.process_files('data/gab.csv', 'data/reddit.csv', stop_after_rows=50, overwrite_output_files=False).values()
-    hateful_posts = post_texts[np.nonzero(Y)]
-    model = Seq2Seq()
-    model.fit(hateful_posts, actual_responses, post_tokens, resp_tokens, p) # TODO: if we end up with good enough predictions on training data, then hold out some testing data
+    X, feature_names, Y, post_texts, post_tokens, actual_responses, resp_tokens = p.process_files('data/reddit.csv', stop_after_rows=500, overwrite_output_files=True, output_files_prefix='reddit_500_').values()
+
+    # only used when we do have already-processed data stored in files:
+    # p = load_preprocessor()
+    # X, feature_names, Y, post_texts, post_tokens, actual_responses, resp_tokens = load_preprocessed_data().values()
     
-    indices_to_test = np.random.choice(hateful_posts.shape[0], size=10, replace=False) # TODO: if we end up with good enough predictions on training data, then use testing data here instead
-    print("\n\nResponse generation tests:")
-    for i in indices_to_test:
-        print('\nResponse for "%s"' % hateful_posts[i])
-        print('Generated: "%s"' % model.generate_response(hateful_posts[i]))
-        print('Actual: "%s"' % actual_responses[i])
+    hateful_posts = post_texts[np.nonzero(Y)]
+
+    epochs_list = [40, 60, 100, 300, 1000]
+    learning_rate_list = [0.01, 0.005]
+    for epochs in epochs_list:
+        for learning_rate in learning_rate_list:
+            model = Seq2Seq()
+            model.fit(hateful_posts, actual_responses, post_tokens, resp_tokens, p, epochs=epochs, learning_rate=learning_rate) # TODO: if we end up with good enough predictions on training data, then hold out some testing data
+            
+            indices_to_test = np.random.choice(hateful_posts.shape[0], size=100, replace=False) # TODO: if we end up with good enough predictions on training data, then use testing data here instead
+            print("\n\nResponse generation tests after %d epochs with learning_rate==%f:" % (epochs, learning_rate))
+            for i in indices_to_test:
+                print('\nResponse for "%s"' % hateful_posts[i])
+                print('Generated: "%s"' % model.generate_response(hateful_posts[i]))
+                print('Actual: "%s"' % actual_responses[i])
+            print("\n\n")
 
 def test():
     '''Make sure basic features of the model are working, using a tiny, simple dataset'''
