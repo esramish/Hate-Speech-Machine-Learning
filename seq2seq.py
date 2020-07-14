@@ -10,12 +10,12 @@ STOP_TOKEN = 'STOPTOKEN'
 A great deal of the code in this class comes directly from the following webpage: https://blog.keras.io/a-ten-minute-introduction-to-sequence-to-sequence-learning-in-keras.html'''
 class Seq2Seq:
     
-    def fit(self, hateful_posts, responses, data_processor):
+    def fit(self, hateful_posts, responses, post_tokens, resp_tokens, data_processor):
         
         ### TRAINING ###
         
-        self.post_tokens = data_processor.get_post_tokens()
-        self.resp_tokens = data_processor.get_resp_tokens() + [START_TOKEN, STOP_TOKEN]
+        self.post_tokens = list(post_tokens)
+        self.resp_tokens = list(resp_tokens) + [START_TOKEN, STOP_TOKEN]
         self.max_post_len = data_processor.get_max_post_tokens()
         self.max_resp_len = data_processor.get_max_resp_tokens()
         self.post_tokenizer = data_processor.get_post_tokenizer()
@@ -29,13 +29,13 @@ class Seq2Seq:
         decoder_target_data_one_hot = one_hot(decoder_target_data, self.resp_tokens, self.max_resp_len + 1, self.resp_tokenizer) # + 1 because of encoding STOP_TOKEN at the end
         
         encoder_inputs = Input(shape=(None, len(self.post_tokens)))
-        encoder = LSTM(4, return_state=True)
+        encoder = LSTM(64, return_state=True)
         encoder_outputs, state_h, state_c = encoder(encoder_inputs)
 
         encoder_states = [state_h, state_c]
 
         decoder_inputs = Input(shape=(None, len(self.resp_tokens)))
-        decoder_lstm = LSTM(4, return_sequences=True, return_state=True,)
+        decoder_lstm = LSTM(64, return_sequences=True, return_state=True,)
         decoder_outputs, _, _ = decoder_lstm(decoder_inputs, initial_state=encoder_states)
         decoder_dense = Dense(len(self.resp_tokens), activation='softmax')
         decoder_outputs = decoder_dense(decoder_outputs)
@@ -48,8 +48,8 @@ class Seq2Seq:
 
         self.encoder_model = Model(encoder_inputs, encoder_states)
 
-        decoder_state_input_h = Input(shape=(4,))
-        decoder_state_input_c = Input(shape=(4,))
+        decoder_state_input_h = Input(shape=(64,))
+        decoder_state_input_c = Input(shape=(64,))
         decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
         decoder_outputs, state_h, state_c = decoder_lstm(decoder_inputs, initial_state=decoder_states_inputs)
         decoder_states = [state_h, state_c]
@@ -95,10 +95,10 @@ def one_hot(strings, token_list, max_string_tokens, tokenizer):
 
 def main():
     p = Processor()
-    X, feature_names, Y, actual_responses = p.process_files('data/gab.csv', 'data/reddit.csv', stop_after_rows=100)
-    hateful_posts = p.get_posts_list()[np.nonzero(Y)]
+    X, feature_names, Y, post_texts, post_tokens, actual_responses, resp_tokens = p.process_files('data/gab.csv', 'data/reddit.csv', stop_after_rows=50, overwrite_output_files=False).values()
+    hateful_posts = post_texts[np.nonzero(Y)]
     model = Seq2Seq()
-    model.fit(hateful_posts, actual_responses, p) # TODO: if we end up with good enough predictions on training data, then hold out some testing data
+    model.fit(hateful_posts, actual_responses, post_tokens, resp_tokens, p) # TODO: if we end up with good enough predictions on training data, then hold out some testing data
     
     indices_to_test = np.random.choice(hateful_posts.shape[0], size=10, replace=False) # TODO: if we end up with good enough predictions on training data, then use testing data here instead
     print("\n\nResponse generation tests:")

@@ -6,12 +6,13 @@ STOPWORDS = stopwords.words('english')
 import re
 import random
 import ast
+import pickle
 
 RANDOM_SEED = 13579
 
 class Processor:
 
-    def process_files(self, *filenames, stop_after_rows=None):
+    def process_files(self, *filenames, stop_after_rows=None, overwrite_output_files=True):
         self.max_post_tokens = 0
         self.max_resp_tokens = 0
         random.seed(RANDOM_SEED)
@@ -92,31 +93,25 @@ class Processor:
         feature_names = post_vectorizer.get_feature_names() # the 1D python list of features (i.e. words) that correspond to the columns of counts_np
         feature_names_np = np.array(feature_names) # convert to numpy
 
-        post_vectorizer.fit(list_of_all_posts)
-        self.post_tokens = post_vectorizer.get_feature_names() # a 1D python list of all the tokens (probably words) used in the processed posts
-
         resp_vectorizer.fit(responses)
-        self.resp_tokens = resp_vectorizer.get_feature_names() # a 1D python list of all the tokens (probably words) used in the processed responses
-
-        self.list_of_all_posts = list_of_all_posts
+        resp_tokens = resp_vectorizer.get_feature_names() # a 1D python list of all the tokens (probably words) used in the processed responses
+        resp_tokens_np = np.array(resp_tokens)
+        
+        responses=np.array(responses)
 
         # remove unique features/columns (i.e. words that appear only in one post throughout the corpus)
         non_unique_indices = np.nonzero(np.count_nonzero(counts_np,axis=0)>1)[0] # the column indices of the features that appear in more than one document throughout the corpus
         non_unique_counts_np = counts_np[:,non_unique_indices] # select only the columns at those indices
         non_unique_feature_names_np = feature_names_np[non_unique_indices] # select only the feature names at those indices
 
-        return non_unique_counts_np, non_unique_feature_names_np, Y, responses
+        if overwrite_output_files:
+            np.savez_compressed('data/preprocessed_data.npz', post_word_counts=non_unique_counts_np, post_feature_names=non_unique_feature_names_np, post_labels=Y, post_texts=list_of_all_posts, post_tokens=feature_names_np, response_texts=responses, resp_tokens=resp_tokens_np)
+            with open('data/preprocessor.pkl', 'wb') as obj_file:
+                pickle.dump(self, obj_file, pickle.HIGHEST_PROTOCOL)
+        
+        return {'post_word_counts': non_unique_counts_np, 'post_feature_names': non_unique_feature_names_np, 'post_labels': Y, 'post_texts': list_of_all_posts, 'post_tokens': feature_names_np, 'response_texts': responses, 'resp_tokens': resp_tokens_np}
 
         # print(np.array(vectorizer.get_feature_names())[np.nonzero(counts[0])[1]]) # good for seeing the word counts of a single post
-
-    def get_post_tokens(self): 
-        return self.post_tokens
-    
-    def get_resp_tokens(self):
-        return self.resp_tokens
-    
-    def get_posts_list(self):
-        return self.list_of_all_posts
     
     def get_max_post_tokens(self):
         return self.max_post_tokens
@@ -135,11 +130,18 @@ def process_responses(responses):
         responses[i]= responses[i].strip()
         # responses[i] = responses[i][1:-1] # no longer needed now that we're using ast.literal_eval
 
+def load_preprocessor():
+    with open('data/preprocessor.pkl', 'rb') as obj_file:
+        preprocessor = pickle.load(obj_file)
+    return preprocessor
 
+def load_preprocessed_data():
+    return np.load('data/preprocessed_data.npz')
 
 def main():
     p = Processor()
-    gab_X, gab_feature_names, gab_Y, gab_resps = p.process_files('data/gab.csv', stop_after_rows=500)
+    gab_X, gab_feature_names, gab_Y, gab_post_texts, gab_post_tokens, gab_resp_texts, gab_resp_tokens = p.process_files('data/gab.csv', stop_after_rows=500, overwrite_output_files=False).values()
+    print(gab_X.shape, gab_feature_names.shape, gab_Y.shape, gab_post_texts.shape, gab_post_tokens.shape, gab_resp_texts.shape, gab_resp_tokens.shape)
     # total_counts = gab_X.sum(0)
 
 if __name__ == "__main__":

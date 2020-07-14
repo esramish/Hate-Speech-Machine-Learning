@@ -4,8 +4,14 @@ from SVM_performance_tester import *
 from sklearn.model_selection import train_test_split
 
 def main():
-    processor = Processor()
-    data, feature_names, labels, responses = processor.process_files('data/gab.csv', 'data/reddit.csv')
+    # only used when we don't have already-processed data stored in files:
+    # processor = Processor()
+    # data, feature_names, labels, post_texts, post_tokens, response_texts, resp_tokens = processor.process_files('data/gab.csv', 'data/reddit.csv').values() 
+
+    # only used when we do have already-processed data stored in files:
+    processor = load_preprocessor()
+    data, feature_names, labels, post_texts, post_tokens, response_texts, resp_tokens = load_preprocessed_data().values() 
+
     X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.1, random_state=6)
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=6)
     # model = SVM()
