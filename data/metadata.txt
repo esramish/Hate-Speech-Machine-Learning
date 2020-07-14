@@ -1,1 +1,2 @@
-11825 gab rows
+11825 gab rows, 33776 gab posts
+5020 reddit rows, 22309 reddit posts
