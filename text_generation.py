@@ -8,9 +8,8 @@ import numpy as np
 
 
 def main():
-    p = Processor()
-    gab_X, gab_feature_names, labels, post_texts, post_tokens, responses, resp_tokens = p.process_files('data/gab.csv', stop_after_rows=50, overwrite_output_files=False).values()
-    # total_counts = gab_X.sum(0)
+    processor = load_preprocessor('gab_500_')
+    gab_X, gab_feature_names, labels, post_texts, post_tokens, responses, resp_tokens = load_preprocessed_data('gab_500_').values()
     textgen = textgenrnn()
     textgen.train_on_texts(responses,num_epochs = 10)
     textgen.generate(3)

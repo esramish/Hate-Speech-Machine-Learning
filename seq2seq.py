@@ -1,6 +1,6 @@
-from keras.models import Model
-from keras.layers import Input, LSTM, Dense
-from keras.optimizers import RMSprop
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, LSTM, Dense
+from tensorflow.keras.optimizers import RMSprop
 from data_processor import *
 import numpy as np
 
@@ -101,16 +101,16 @@ def one_hot(strings, token_list, max_string_tokens, tokenizer):
 def main():
 
     # only used when we don't have already-processed data stored in files:
-    p = Processor()
-    X, feature_names, Y, post_texts, post_tokens, actual_responses, resp_tokens = p.process_files('data/reddit.csv', stop_after_rows=500, overwrite_output_files=True, output_files_prefix='reddit_500_').values()
+    # p = Processor()
+    # X, feature_names, Y, post_texts, post_tokens, actual_responses, resp_tokens = p.process_files('data/reddit.csv', stop_after_rows=500, overwrite_output_files=True, output_files_prefix='reddit_500_').values()
 
     # only used when we do have already-processed data stored in files:
-    # p = load_preprocessor()
-    # X, feature_names, Y, post_texts, post_tokens, actual_responses, resp_tokens = load_preprocessed_data().values()
+    p = load_preprocessor('gab_500_')
+    X, feature_names, Y, post_texts, post_tokens, actual_responses, resp_tokens = load_preprocessed_data('gab_500_').values()
     
     hateful_posts = post_texts[np.nonzero(Y)]
 
-    epochs_list = [40, 60, 100, 300, 1000]
+    epochs_list = [40, 60, 100]
     learning_rate_list = [0.01, 0.005]
     for epochs in epochs_list:
         for learning_rate in learning_rate_list:
